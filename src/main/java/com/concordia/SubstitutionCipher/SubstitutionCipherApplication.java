@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.concordia.SubstitutionCipher.enums.DecryptMethod;
 import com.concordia.SubstitutionCipher.utils.CipherUtils;
 import com.concordia.SubstitutionCipher.utils.GeneralUtils;
 
@@ -26,7 +27,7 @@ public class SubstitutionCipherApplication {
    */
   private static void showMenu() throws IOException {
     try {
-      String option = GeneralUtils
+      final String option = GeneralUtils
             .getUserResponse("Choose 1 for Encrypt a Plain Text, 2 to find the key of a Ciphertext or 0 to exit:");
 
       switch (Integer.parseInt(option)) {
@@ -44,11 +45,28 @@ public class SubstitutionCipherApplication {
         LOGGER.info("Encrypted message: " + CipherUtils.encrypt(adaptedText, adaptedKey));
         showMenu();
       case 2:
-        System.out.println("You chose to find the key.");
-        final String cipherText = GeneralUtils.getUserResponse("Please insert the cipher text: ");
-        final String adapterCipherText = GeneralUtils.adaptString(cipherText);
-        CipherUtils.decrypt(adapterCipherText);
-        showMenu();
+        final String decryptionMethod = GeneralUtils
+              .getUserResponse("Choose 1 for Fast Method or 2 for Decrypt and Evaluate Cryptanalysis:");
+        switch (Integer.parseInt(decryptionMethod)) {
+        case 1:
+          System.out.println("You selected Fast Method Cryptanalysis...");
+          final String cipherTextForFastMethod = GeneralUtils.getUserResponse("Please insert the cipher text: ");
+          final String adapterCipherTextForFastMethod = GeneralUtils.adaptString(cipherTextForFastMethod);
+          CipherUtils.decrypt(adapterCipherTextForFastMethod, DecryptMethod.FAST_METHOD);
+          showMenu();
+        case 2:
+          System.out.println("You selected Fast Method Cryptanalysis...");
+          final String cipherTextForDecryptAndEvaluate = GeneralUtils
+                .getUserResponse("Please insert the cipher text: ");
+          final String adapterCipherTextForDecryptAndEvaluate = GeneralUtils
+                .adaptString(cipherTextForDecryptAndEvaluate);
+          CipherUtils.decrypt(adapterCipherTextForDecryptAndEvaluate, DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD);
+          showMenu();
+        default:
+          System.out.println("You chose an invalid option.");
+          showMenu();
+        }
+
       default:
         System.out.println("You chose an invalid option.");
         showMenu();

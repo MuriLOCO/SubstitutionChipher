@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.concordia.SubstitutionCipher.enums.BaseVariables;
+import com.concordia.SubstitutionCipher.enums.DecryptMethod;
 
 public class CipherUtils {
 
@@ -32,7 +33,7 @@ public class CipherUtils {
 
   /**
   * Encrypts the plain text using the corresponding key 
-  * @param plainText - Plain text to be encrypted
+  * @param plainText - Plain text to be ted
   * @param key - Current key
   * @return Cipher Text in String format
   */
@@ -56,6 +57,16 @@ public class CipherUtils {
 
     // Returns the Cipher Text
     return cipherText.toString();
+  }
+  
+  /**
+   * Decrypts the plain text using the corresponding key 
+   * @param plainText - Plain text to be ted
+   * @param key - Current key
+   * @return Cipher Text in String format
+   */
+  public static String applyDecryption(final String plainText, final String key) {
+    return encrypt(plainText, key);
   }
 
   /**
@@ -99,7 +110,7 @@ public class CipherUtils {
    * @return Decrypted text as String
    * @throws IOException
    */
-  public static void decrypt(final String cipherText) throws IOException {
+  public static void decrypt(final String cipherText, final DecryptMethod decryptMethod) throws IOException {
     final Map<Character, Double> characterFrequency = getFrequencyOfChars(cipherText);
 
     LOGGER.trace("Sorts the Map to the most frequent to less frequent");
@@ -115,9 +126,13 @@ public class CipherUtils {
     replacementsCharacters.forEach((englishChar, cipherChar) -> {
       recoveredKey.append(cipherChar);
     });
-
+    if (decryptMethod.equals(DecryptMethod.FAST_METHOD))
     applyFastMethodCryptanalysis(recoveredKey.toString(),
           cipherText);
+
+    if (decryptMethod.equals(DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD))
+      applyDecrypAndEvaluateCryptanalysis(recoveredKey.toString(),
+            cipherText);
   }
 
   /**
@@ -150,9 +165,9 @@ public class CipherUtils {
   /**
    * Cryptanalysis of cipher text using "A Fast Method for the Cryptanalysis of Substitution Ciphers" paper
    * By Thomas Jakobseny
-   * @param initialKey - The initial putative key
-   * @param cipherText - The current cipherText
-   * @return Found key
+   * @param initialKey - Initial key
+   * @param cipherText - Cipher Text
+   * @return Plain text at String format
    * @throws IOException 
    */
   private static void applyFastMethodCryptanalysis(final String initialKey, final String cipherText)
@@ -165,12 +180,12 @@ public class CipherUtils {
     LOGGER.trace("Loading the English bi-gram file...");
     LOGGER.trace(
           "This file was taken from website http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/");
-    final String biGramFile = IOUtils.toString(Thread.currentThread().getContextClassLoader()
+    final String bigramFile = IOUtils.toString(Thread.currentThread().getContextClassLoader()
           .getResourceAsStream("english_bigrams.txt"), "UTF-8");
 
     LOGGER.trace(
           "Preparing the E matrix (English bi-gram frequency), it is a 26X26 that contains the english distribution of bigrams.");
-    final Double[][] languageFreqDistMatrix = generateLanguageFreqDistMatrix(biGramFile);
+    final Double[][] languageFreqDistMatrix = generateLanguageFreqDistMatrix(bigramFile);
     LOGGER.trace("Step 0 in algorithm:  Let a = b = 1");
     LOGGER.trace(
           "Step 1 in algorithm,  Construct an initial key guess, k, based upon the symbol frequencies of the expected language and the ciphertext.");
@@ -262,7 +277,114 @@ public class CipherUtils {
     LOGGER.info("Key that fits the most is: " + key);
     LOGGER.info("Ordering key with English Alphabet...");
     LOGGER.info("Ordered and final key is: " + CipherUtils.orderKey(key));
-    LOGGER.info("Decrypted text is: " + CipherUtils.encrypt(cipherText, key));
+    LOGGER.info("Decrypted text is: " + CipherUtils.applyDecryption(cipherText, key));
+  }
+
+  /**
+   * Method more accurate but slower to Decrypt
+   * @param initialKey - Initial key
+   * @param cipherText - Cipher Text
+   * @return Plain text at String format
+   * @throws IOException
+   */
+  private static void applyDecrypAndEvaluateCryptanalysis(String initialKey, String cipherText) throws IOException {
+    LOGGER.info("Applying Decrypt and Evaluate Cryptanalysis....");
+    LOGGER.trace(
+          "Loading NGram files, this file was taken from website http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/");
+    final String ngramFile = IOUtils.toString(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream("english_quadgrams.txt"), "UTF-8");
+    long loopCounter = 0;
+    String k0;
+    int alpha;
+    int beta;
+    double fitness;
+    double newFitness;
+
+    LOGGER.trace("Preparing the quadgrams from english...");
+    final Hashtable<String, Double> languageNGram = generateLanguageNGrams(ngramFile);
+
+    LOGGER.trace("Step 0 in algorithm :  Let a = b = 1");
+    int a = 1;
+    int b = 1;
+
+    LOGGER.trace(
+          "Step 1 in algorithm,  Construct an initial key guess, k, based upon the symbol frequencies of the expected language and the ciphertext");
+    String key = initialKey.toUpperCase();
+    LOGGER.trace("The initial guess key was calculated in the calling function and passed to this method");
+
+    LOGGER.trace(
+          "Step 2 in algorithm :  Let D = D(d(c; k)). Basically it prepare distribution matrix of cipher text, it consist of 2 steps");
+    LOGGER.trace("Step 3 in algorithm:  Let v = f (d(c; k))");
+    final String ptext = CipherUtils.applyDecryption(cipherText, key);
+    final Hashtable<String, Double> textNgram = generateTextNgrams(4, ptext);
+    fitness = calculateFitness(textNgram, languageNGram);
+
+    LOGGER.trace("Step 4 in Algorithm:  Let k0 = k.");
+    k0 = key;
+
+    while (true) {
+      LOGGER.trace("Step 6 in the algorithm:  Change k0 by swapping two elements, Alpha and Beta, in k0");
+      LOGGER.trace("Step 6a in algorithm,  Let Alpha = Sa and Beta = Sa+b . Swap the symbols Alpha and Beta in k0");
+
+      LOGGER.trace("This is done to keep a , b values as in the algorithm starts with 1");
+      String tempS = "*" + k0;
+      char[] c = tempS.toCharArray();
+
+      alpha = c[a];
+      beta = c[a + b];
+
+      char temp = c[a];
+      c[a] = c[a + b];
+      c[a + b] = temp;
+      tempS = new String(c);
+      k0 = tempS.substring(1);
+      LOGGER.trace("Removing *");
+
+      LOGGER.trace("Step 6b in algorithm, Let a = a + 1.");
+      a = a + 1;
+
+      LOGGER.trace("Step 6c. If a + b <= 27 then go to step 7.");
+      LOGGER.trace(
+            "Note: They are using 27 because their array starts from 1 to 27. which contains Space, A,B....Z while the code starts from 0 to 25 which contains A,B,...Z");
+      if (!((a + b) <= 26)) {
+        LOGGER.trace("Step 6d in algorithm . Let a = 1.");
+        a = 1;
+        LOGGER.trace("Step 6e in algorithm. Let b = b + 1");
+        b = b + 1;
+
+        LOGGER.trace("Step 6f in algorithm. If b = 27 then terminate algorithm.");
+        LOGGER.trace("Sote our matrix starts from 0 to 25, this is why do comparison ad b=25");
+        if (b == 26) {
+          break;
+        }
+      }
+      LOGGER.trace("Decrypting the cipher text using the new key and evaluate it is fitness");
+      final String decryptedText = CipherUtils.applyDecryption(cipherText, k0);
+      final Hashtable<String, Double> p0 = generateTextNgrams(4, decryptedText);
+      newFitness = calculateFitness(p0, languageNGram);
+      LOGGER.trace(
+            "Counter: " + loopCounter + " " + (char) alpha + (char) beta + " " + k0 + " " + newFitness + " " + fitness);
+      LOGGER.trace(decryptedText);
+      LOGGER.trace("Step 9 in Algorithm,  If v 0 >= v then go to step 4.");
+      if (newFitness >= fitness) {
+        LOGGER.trace("Step 4 in Algorithm :  Let k0 = k.");
+        k0 = key;
+      } else {
+        LOGGER.info("Key fitness is better at loop: " + loopCounter + ", the new key is: " + k0);
+        LOGGER.info("Decrypted text at loop: " + loopCounter + " : " + decryptedText);
+        LOGGER.trace("Step 9b in algorithm. Let a = b = 1");
+        a = 1;
+        b = 1;
+        LOGGER.trace("Step 10 in Algorithm,  Let v = v0");
+        fitness = newFitness;
+        LOGGER.trace("Step 11 in Algorithm. Let k = k0");
+        key = k0;
+        LOGGER.trace("Step 13 in algorithm. Go to step 6.");
+        LOGGER.trace("We don't have to write code because the next executed phrase is step 6.");
+      }
+      loopCounter++;
+    }
+    LOGGER.info("Found key is: " + CipherUtils.orderKey(key));
   }
 
   /**
@@ -348,23 +470,16 @@ public class CipherUtils {
       LOGGER.trace("Key: " + key);
       ngrams.put(key, ngrams.get(key) / countAll);
     }
-    logHashTable(ngrams);
-    return (ngrams);
 
-  }
-
-  /**
-   * Logs the HashTable with DEBUG level
-   * @param table - Hashtable to be logged
-   */
-  private static void logHashTable(final Hashtable<String, Double> table) {
-    final Enumeration<String> e = table.keys();
+    final Enumeration<String> eForLog = ngrams.keys();
     while (e.hasMoreElements()) {
-      final String key = (String) e.nextElement();
-      LOGGER.trace(key + " : " + table.get(key));
-    }
-  }
+      final String key = eForLog.nextElement();
+      LOGGER.trace(key + " : " + ngrams.get(key));
 
+    }
+    return ngrams;
+
+  }
   /**
    * Extract ngrams from a given text and populate the loaded hash table into in 26X26 Matrix
    * @param intgram - Integer with frequency
@@ -451,7 +566,7 @@ public class CipherUtils {
 
     final Enumeration<String> e = table.keys();
     while (e.hasMoreElements()) {
-      String key = (String) e.nextElement();
+      final String key = (String) e.nextElement();
       alpha = key.charAt(0);
       beta = key.charAt(1);
       i = alpha - 65;
@@ -459,7 +574,7 @@ public class CipherUtils {
       matrix[i][j] = table.get(key);
 
     }
-    return (matrix);
+    return matrix;
   }
 
   /**
@@ -489,6 +604,26 @@ public class CipherUtils {
       for (int j = 0; j < 26; j++) {
         score = score + Math.abs(matrix1[i][j] - matrix2[i][j]);
       }
+    }
+    return score;
+  }
+
+  private static Double calculateFitness(final Hashtable<String, Double> hashTable1,
+        Hashtable<String, Double> hashTable2) {
+    Double score = 0.0;
+    final Enumeration<String> e = hashTable2.keys();
+    while (e.hasMoreElements()) {
+      final String key = e.nextElement();
+      if (hashTable1.containsKey(key))
+        score = score + Math.abs(hashTable1.get(key) - hashTable2.get(key));
+      else
+        score = score + Math.abs(hashTable2.get(key));
+    }
+    final Enumeration<String> e1 = hashTable1.keys();
+    while (e1.hasMoreElements()) {
+      String key = (String) e1.nextElement();
+      if (!hashTable2.containsKey(key))
+        score = score + Math.abs(hashTable1.get(key));
     }
     return score;
   }
