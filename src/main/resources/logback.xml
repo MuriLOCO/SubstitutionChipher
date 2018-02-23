@@ -11,7 +11,7 @@
     </layout>
   </appender>
 
-  <appender name="FILE-AUDIT"
+  <appender name="FILE-INFO"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${DEV_HOME}/cipher.log</file>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -22,7 +22,7 @@
 
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- rollover daily -->
-      <fileNamePattern>${DEV_HOME}/archived/debug.%d{yyyy-MM-dd}.%i.log
+      <fileNamePattern>${DEV_HOME}/archived/cipher-info.%d{yyyy-MM-dd}.%i.log
                         </fileNamePattern>
       <timeBasedFileNamingAndTriggeringPolicy
         class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
@@ -34,7 +34,7 @@
 
   <appender name="FILE-ERROR"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${DEV_HOME}/error.log</file>
+    <file>${DEV_HOME}/cipher-error.log</file>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <Pattern>
         %d{yyyy-MM-dd HH:mm:ss} - %msg%n
@@ -54,9 +54,9 @@
   </appender>
 
   <!-- Send logs to both console and file audit -->
-  <logger name="com.concordia.SubstitutionCipher" level="debug"
+  <logger name="com.concordia.SubstitutionCipher" level="info"
     additivity="false">
-    <appender-ref ref="FILE-AUDIT" />
+    <appender-ref ref="FILE-INFO" />
     <appender-ref ref="STDOUT" />
   </logger>
 
