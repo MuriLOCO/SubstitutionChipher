@@ -28,6 +28,8 @@ public class CipherUtils {
   private static final String TEMP_PATH = System.getProperty("java.io.tmpdir");
   private static final String TEMP_FILE_NAME = "temp_file.txt";
 
+  private static String globalRecoveredKey;
+
   private final static char[] FREQUENCE_ORDER_CHARACTERS = { 'E', 'T', 'A', 'O', 'I', 'N', 'S', 'R', 'H', 'L', 'D',
         'C', 'U', 'M', 'F', 'G', 'P', 'W', 'Y', 'B', 'V', 'K', 'J', 'X', 'Z', 'Q' };
 
@@ -58,7 +60,7 @@ public class CipherUtils {
     // Returns the Cipher Text
     return cipherText.toString();
   }
-  
+
   /**
    * Decrypts the plain text using the corresponding key 
    * @param plainText - Plain text to be ted
@@ -127,12 +129,15 @@ public class CipherUtils {
       recoveredKey.append(cipherChar);
     });
     if (decryptMethod.equals(DecryptMethod.FAST_METHOD))
-    applyFastMethodCryptanalysis(recoveredKey.toString(),
-          cipherText);
+      applyFastMethodCryptanalysis(recoveredKey.toString(),
+            cipherText);
 
     if (decryptMethod.equals(DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD))
       applyDecrypAndEvaluateCryptanalysis(recoveredKey.toString(),
             cipherText);
+    
+    if (decryptMethod.equals(DecryptMethod.MIXED_METHOD))
+      applyMixedMethod(recoveredKey.toString(), cipherText);
   }
 
   /**
@@ -172,6 +177,8 @@ public class CipherUtils {
    */
   private static void applyFastMethodCryptanalysis(final String initialKey, final String cipherText)
         throws IOException {
+    LOGGER.trace("Reseting the global found key...");
+    globalRecoveredKey = null;
     LOGGER.info("Applying Fast Method Cryptanalysis...");
     long loopCounter = 0;
     int a = 1;
@@ -273,10 +280,11 @@ public class CipherUtils {
       }
       loopCounter++;
     }
+    globalRecoveredKey = CipherUtils.orderKey(key);
     LOGGER.info("Total number of attempts: " + loopCounter);
     LOGGER.info("Key that fits the most is: " + key);
     LOGGER.info("Ordering key with English Alphabet...");
-    LOGGER.info("Ordered and final key is: " + CipherUtils.orderKey(key));
+    LOGGER.info("Ordered and final key is: " + globalRecoveredKey);
     LOGGER.info("Decrypted text is: " + CipherUtils.applyDecryption(cipherText, key));
   }
 
@@ -385,6 +393,20 @@ public class CipherUtils {
       loopCounter++;
     }
     LOGGER.info("Found key is: " + CipherUtils.orderKey(key));
+    CipherUtils.orderKey(key);
+    LOGGER.trace("Reseting the global found key...");
+    globalRecoveredKey = null;
+  }
+
+  /**
+   * Decrypts the cipher text using a mixed method
+   * @param key - the key
+   * @param cipherText - The cipher text
+   * @throws IOException
+   */
+  private static void applyMixedMethod(final String key, final String cipherText) throws IOException {
+    applyFastMethodCryptanalysis(key, cipherText);
+    applyDecrypAndEvaluateCryptanalysis(globalRecoveredKey, cipherText);
   }
 
   /**
@@ -480,6 +502,7 @@ public class CipherUtils {
     return ngrams;
 
   }
+
   /**
    * Extract ngrams from a given text and populate the loaded hash table into in 26X26 Matrix
    * @param intgram - Integer with frequency

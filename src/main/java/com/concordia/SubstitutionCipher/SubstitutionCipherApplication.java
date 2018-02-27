@@ -46,7 +46,8 @@ public class SubstitutionCipherApplication {
         showMenu();
       case 2:
         final String decryptionMethod = GeneralUtils
-              .getUserResponse("Choose 1 for Fast Method or 2 for Decrypt and Evaluate Cryptanalysis:");
+              .getUserResponse(
+                    "Choose 1 for Fast Method, 2 for Decrypt and Evaluate Cryptanalysis or 3 for a Mixed method:");
         switch (Integer.parseInt(decryptionMethod)) {
         case 1:
           System.out.println("You selected Fast Method Cryptanalysis...");
@@ -62,6 +63,15 @@ public class SubstitutionCipherApplication {
                 .adaptString(cipherTextForDecryptAndEvaluate);
           CipherUtils.decrypt(adapterCipherTextForDecryptAndEvaluate, DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD);
           showMenu();
+        case 3:
+          System.out.println("You selected Mixed Method...");
+          final String cipherTextForMixedMethod = GeneralUtils
+                .getUserResponse("Please insert the cipher text: ");
+          final String adapterCipherTextForMixedMethod = GeneralUtils
+                .adaptString(cipherTextForMixedMethod);
+          CipherUtils.decrypt(adapterCipherTextForMixedMethod, DecryptMethod.MIXED_METHOD);
+          showMenu();
+
         default:
           System.out.println("You chose an invalid option.");
           showMenu();
