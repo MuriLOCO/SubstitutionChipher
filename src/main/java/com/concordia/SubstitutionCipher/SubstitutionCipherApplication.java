@@ -35,26 +35,26 @@ public class SubstitutionCipherApplication extends Application {
   }
 
   @Override
-  public void start(Stage stage) throws Exception {
-    Parent root = FXMLLoader.load(getClass().getResource("Main.fxml"));
+  public void start(final Stage stage) throws Exception {
+    final Parent root = FXMLLoader.load(getClass().getResource("Main.fxml"));
       
       stage.initStyle(StageStyle.TRANSPARENT);
       root.setOnMousePressed(new EventHandler<MouseEvent>(){
        @Override
-          public void handle(MouseEvent event){
+      public void handle(final MouseEvent event) {
               xOffset = event.getSceneX();
               yOffset = event.getSceneY();
           }
        });
        root.setOnMouseDragged(new EventHandler<MouseEvent>(){
           @Override
-           public void handle(MouseEvent event){
+      public void handle(final MouseEvent event) {
                stage.setX(event.getSceneX() - xOffset);
                stage.setY(event.getScreenY() - yOffset);
            }
        });
-      Scene scene = new Scene(root);
-      
+
+    final Scene scene = new Scene(root);
       scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
       stage.setScene(scene);
       stage.show();
@@ -62,9 +62,9 @@ public class SubstitutionCipherApplication extends Application {
   
   /**
    * Shows the initial menu
-   * @throws IOException
+   * @throws Exception 
    */
-  private static void showMenu() throws IOException {
+  private static void showMenu() throws Exception {
     try {
       final String option = GeneralUtils
             .getUserResponse("Choose 1 for Encrypt a Plain Text, 2 to find the key of a Ciphertext or 0 to exit:");
@@ -100,7 +100,7 @@ public class SubstitutionCipherApplication extends Application {
                 .getUserResponse("Please insert the cipher text: ");
           final String adapterCipherTextForDecryptAndEvaluate = GeneralUtils
                 .adaptString(cipherTextForDecryptAndEvaluate);
-          CipherUtils.decrypt(adapterCipherTextForDecryptAndEvaluate, DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD);
+          CipherUtils.decrypt(adapterCipherTextForDecryptAndEvaluate, DecryptMethod.DECRYPT_AND_EVALUATE_METHOD);
           showMenu();
         case 3:
           System.out.println("You selected Mixed Method...");

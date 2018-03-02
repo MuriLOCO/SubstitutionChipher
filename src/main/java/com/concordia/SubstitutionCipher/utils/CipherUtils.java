@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.concordia.SubstitutionCipher.enums.BaseVariables;
 import com.concordia.SubstitutionCipher.enums.DecryptMethod;
+import com.concordia.SubstitutionCipher.wrappers.CryptanalysisWrapper;
 
 public class CipherUtils {
 
@@ -110,9 +111,10 @@ public class CipherUtils {
    * Decrypts the cipher text
    * @param cipherText - Current cipher text
    * @return Decrypted text as String
-   * @throws IOException
+   * @throws Exception 
    */
-  public static void decrypt(final String cipherText, final DecryptMethod decryptMethod) throws IOException {
+  public static CryptanalysisWrapper decrypt(final String cipherText, final DecryptMethod decryptMethod)
+        throws Exception {
     final Map<Character, Double> characterFrequency = getFrequencyOfChars(cipherText);
 
     LOGGER.trace("Sorts the Map to the most frequent to less frequent");
@@ -129,15 +131,18 @@ public class CipherUtils {
       recoveredKey.append(cipherChar);
     });
     if (decryptMethod.equals(DecryptMethod.FAST_METHOD))
-      applyFastMethodCryptanalysis(recoveredKey.toString(),
+      return applyFastMethodCryptanalysis(recoveredKey.toString(),
             cipherText);
 
-    if (decryptMethod.equals(DecryptMethod.DECRYPT_AND_ANALYSIS_METHOD))
-      applyDecrypAndEvaluateCryptanalysis(recoveredKey.toString(),
+    else if (decryptMethod.equals(DecryptMethod.DECRYPT_AND_EVALUATE_METHOD))
+      return applyDecrypAndEvaluateCryptanalysis(recoveredKey.toString(),
             cipherText);
     
-    if (decryptMethod.equals(DecryptMethod.MIXED_METHOD))
-      applyMixedMethod(recoveredKey.toString(), cipherText);
+    else if (decryptMethod.equals(DecryptMethod.MIXED_METHOD))
+      return applyMixedMethod(recoveredKey.toString(), cipherText);
+
+    else
+      throw new Exception("Failed to Decrypt.");
   }
 
   /**
@@ -175,7 +180,7 @@ public class CipherUtils {
    * @return Plain text at String format
    * @throws IOException 
    */
-  private static void applyFastMethodCryptanalysis(final String initialKey, final String cipherText)
+  private static CryptanalysisWrapper applyFastMethodCryptanalysis(final String initialKey, final String cipherText)
         throws IOException {
     LOGGER.trace("Reseting the global found key...");
     globalRecoveredKey = null;
@@ -280,12 +285,14 @@ public class CipherUtils {
       }
       loopCounter++;
     }
+    final String decryptedText = CipherUtils.applyDecryption(cipherText, key);
     globalRecoveredKey = CipherUtils.orderKey(key);
     LOGGER.info("Total number of attempts: " + loopCounter);
     LOGGER.info("Key that fits the most is: " + key);
     LOGGER.info("Ordering key with English Alphabet...");
     LOGGER.info("Ordered and final key is: " + globalRecoveredKey);
-    LOGGER.info("Decrypted text is: " + CipherUtils.applyDecryption(cipherText, key));
+    LOGGER.info("Decrypted text is: " + decryptedText);
+    return new CryptanalysisWrapper(globalRecoveredKey, decryptedText);
   }
 
   /**
@@ -295,7 +302,8 @@ public class CipherUtils {
    * @return Plain text at String format
    * @throws IOException
    */
-  private static void applyDecrypAndEvaluateCryptanalysis(String initialKey, String cipherText) throws IOException {
+  private static CryptanalysisWrapper applyDecrypAndEvaluateCryptanalysis(String initialKey, String cipherText)
+        throws IOException {
     LOGGER.info("Applying Decrypt and Evaluate Cryptanalysis....");
     LOGGER.trace(
           "Loading NGram files, this file was taken from website http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/english-letter-frequencies/");
@@ -329,7 +337,7 @@ public class CipherUtils {
 
     LOGGER.trace("Step 4 in Algorithm:  Let k0 = k.");
     k0 = key;
-
+    String finalDecryptedText = null;
     while (true) {
       LOGGER.trace("Step 6 in the algorithm:  Change k0 by swapping two elements, Alpha and Beta, in k0");
       LOGGER.trace("Step 6a in algorithm,  Let Alpha = Sa and Beta = Sa+b . Swap the symbols Alpha and Beta in k0");
@@ -380,6 +388,7 @@ public class CipherUtils {
       } else {
         LOGGER.info("Key fitness is better at loop: " + loopCounter + ", the new key is: " + k0);
         LOGGER.info("Decrypted text at loop: " + loopCounter + " : " + decryptedText);
+        finalDecryptedText = decryptedText;
         LOGGER.trace("Step 9b in algorithm. Let a = b = 1");
         a = 1;
         b = 1;
@@ -392,10 +401,12 @@ public class CipherUtils {
       }
       loopCounter++;
     }
-    LOGGER.info("Found key is: " + CipherUtils.orderKey(key));
+    final String foundKey = CipherUtils.orderKey(key);
+    LOGGER.info("Found key is: " + foundKey);
     CipherUtils.orderKey(key);
     LOGGER.trace("Reseting the global found key...");
     globalRecoveredKey = null;
+    return new CryptanalysisWrapper(foundKey, finalDecryptedText);
   }
 
   /**
@@ -404,9 +415,9 @@ public class CipherUtils {
    * @param cipherText - The cipher text
    * @throws IOException
    */
-  private static void applyMixedMethod(final String key, final String cipherText) throws IOException {
+  private static CryptanalysisWrapper applyMixedMethod(final String key, final String cipherText) throws IOException {
     applyFastMethodCryptanalysis(key, cipherText);
-    applyDecrypAndEvaluateCryptanalysis(globalRecoveredKey, cipherText);
+    return applyDecrypAndEvaluateCryptanalysis(globalRecoveredKey, cipherText);
   }
 
   /**
