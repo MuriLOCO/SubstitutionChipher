@@ -30,6 +30,7 @@ public class SubstitutionCipherApplication extends Application {
     final Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("main.fxml"));
       
       stage.initStyle(StageStyle.TRANSPARENT);
+      stage.setTitle("Substitution Cipher");
       root.setOnMousePressed(new EventHandler<MouseEvent>(){
        @Override
       public void handle(final MouseEvent event) {
