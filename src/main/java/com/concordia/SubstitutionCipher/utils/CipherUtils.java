@@ -372,6 +372,7 @@ public class CipherUtils {
       }
       LOGGER.trace("Decrypting the cipher text using the new key and evaluate it is fitness");
       final String decryptedText = CipherUtils.applyDecryption(cipherText, k0);
+      finalDecryptedText = decryptedText;
       final Hashtable<String, Double> p0 = generateTextNgrams(4, decryptedText);
       newFitness = calculateFitness(p0, languageNGram);
       LOGGER.trace(
