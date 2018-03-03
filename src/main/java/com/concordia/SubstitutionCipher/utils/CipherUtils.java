@@ -425,7 +425,7 @@ public class CipherUtils {
     final Hashtable<String, Double> ngrams = new Hashtable<>();
 
     LOGGER.trace("Saving temporay the bigram file into a temp folder...");
-    final File file = new File(TEMP_PATH + TEMP_FILE_NAME);
+    final File file = new File(TEMP_PATH + File.separator + TEMP_FILE_NAME);
 
     FileInputStream fis = null;
     BufferedReader br = null;
