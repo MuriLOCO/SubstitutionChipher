@@ -29,8 +29,6 @@ public class CipherUtils {
   private static final String TEMP_PATH = System.getProperty("java.io.tmpdir");
   private static final String TEMP_FILE_NAME = "temp_file.txt";
 
-  private static String globalRecoveredKey;
-
   private final static char[] FREQUENCE_ORDER_CHARACTERS = { 'E', 'T', 'A', 'O', 'I', 'N', 'S', 'R', 'H', 'L', 'D',
         'C', 'U', 'M', 'F', 'G', 'P', 'W', 'Y', 'B', 'V', 'K', 'J', 'X', 'Z', 'Q' };
 
@@ -182,8 +180,6 @@ public class CipherUtils {
    */
   private static CryptanalysisWrapper applyFastMethodCryptanalysis(final String initialKey, final String cipherText)
         throws IOException {
-    LOGGER.trace("Reseting the global found key...");
-    globalRecoveredKey = null;
     LOGGER.info("Applying Fast Method Cryptanalysis...");
     long loopCounter = 0;
     int a = 1;
@@ -286,13 +282,13 @@ public class CipherUtils {
       loopCounter++;
     }
     final String decryptedText = CipherUtils.applyDecryption(cipherText, key);
-    globalRecoveredKey = CipherUtils.orderKey(key);
+    final String recoveredKey = CipherUtils.orderKey(key);
     LOGGER.info("Total number of attempts: " + loopCounter);
     LOGGER.info("Key that fits the most is: " + key);
     LOGGER.info("Ordering key with English Alphabet...");
-    LOGGER.info("Ordered and final key is: " + globalRecoveredKey);
+    LOGGER.info("Ordered and final key is: " + recoveredKey);
     LOGGER.info("Decrypted text is: " + decryptedText);
-    return new CryptanalysisWrapper(globalRecoveredKey, decryptedText);
+    return new CryptanalysisWrapper(recoveredKey, decryptedText, key);
   }
 
   /**
@@ -403,10 +399,7 @@ public class CipherUtils {
     }
     final String foundKey = CipherUtils.orderKey(key);
     LOGGER.info("Found key is: " + foundKey);
-    CipherUtils.orderKey(key);
-    LOGGER.trace("Reseting the global found key...");
-    globalRecoveredKey = null;
-    return new CryptanalysisWrapper(foundKey, finalDecryptedText);
+    return new CryptanalysisWrapper(foundKey, finalDecryptedText, key);
   }
 
   /**
@@ -416,8 +409,8 @@ public class CipherUtils {
    * @throws IOException
    */
   private static CryptanalysisWrapper applyMixedMethod(final String key, final String cipherText) throws IOException {
-    applyFastMethodCryptanalysis(key, cipherText);
-    return applyDecrypAndEvaluateCryptanalysis(globalRecoveredKey, cipherText);
+    return applyDecrypAndEvaluateCryptanalysis(applyFastMethodCryptanalysis(key, cipherText).getNotOrderedKey(),
+          cipherText);
   }
 
   /**
