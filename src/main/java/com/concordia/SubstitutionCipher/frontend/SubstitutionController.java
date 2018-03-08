@@ -5,22 +5,17 @@ import com.concordia.SubstitutionCipher.utils.CipherUtils;
 import com.concordia.SubstitutionCipher.utils.GeneralUtils;
 import com.concordia.SubstitutionCipher.wrappers.CryptanalysisWrapper;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 
 public class SubstitutionController {
 
@@ -78,35 +73,17 @@ public class SubstitutionController {
     } else if (event.getTarget() == btnEncryption || event.getTarget().toString().contains("Encrypt")) {
       if (!GeneralUtils.validateKey(tfKeyEncrypt.getText())) {
 
-        final Stage dialogStage = new Stage();
-        final GridPane grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        final Scene scene = new Scene(grid, 300, 150);
-        dialogStage.setScene(scene);
-        dialogStage.setTitle("Error");
-        dialogStage.initModality(Modality.WINDOW_MODAL);
+        final Alert alert = new Alert(AlertType.ERROR, "The key is invalid", ButtonType.OK);
+        alert.showAndWait();
 
-        final Label lab_alert = new Label("Problems with the key!");
-        grid.add(lab_alert, 0, 1);
-
-        final Button btbOk = new Button("Ok I got it ;) I will fix");
-        btbOk.setOnAction(new EventHandler<ActionEvent>() {
-
-          @Override
-          public void handle(final ActionEvent arg0) {
-            dialogStage.hide();
-          }
-        });
-        grid.add(btbOk, 0, 2);
-        dialogStage.show();
+        if (alert.getResult() == ButtonType.OK)
+          alert.hide();
 
       } else {
-      adaptedText = GeneralUtils.adaptString(taPlainTextEncrypt.getText());
+        adaptedText = GeneralUtils.adaptString(taPlainTextEncrypt.getText());
         adaptedKey = GeneralUtils.adaptString(tfKeyEncrypt.getText());
-      String result = CipherUtils.encrypt(adaptedText, adaptedKey);
-      taCipherTextEncrypt.setText(result);
+        String result = CipherUtils.encrypt(adaptedText, adaptedKey);
+        taCipherTextEncrypt.setText(result);
       }
 
     } else if (event.getTarget() == btnDecryption || event.getTarget().toString().contains("Decrypt")) {
