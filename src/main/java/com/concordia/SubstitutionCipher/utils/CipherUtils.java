@@ -263,7 +263,8 @@ public class CipherUtils {
 
       } else {
         //If the new key enhance the fitness, we consider it better and we update our initial key
-        LOGGER.info("Key fitness has improved at attempt " + (loopCounter + 1) + ". New key: " + k0);
+        LOGGER.info("Key fitness has improved at attempt " + (loopCounter + 1) + ". New key: " + k0
+              + " new key fitness is: " + secondFitness + " old key fitness is: " + fitness);
         LOGGER.trace("Step 9b in algorithm. Let a = b = 1.");
         a = 1;
         b = 1;
@@ -383,7 +384,8 @@ public class CipherUtils {
         LOGGER.trace("Step 4 in Algorithm :  Let k0 = k.");
         k0 = key;
       } else {
-        LOGGER.info("Key fitness is better at loop: " + loopCounter + ", the new key is: " + k0);
+        LOGGER.info("Key fitness has improved at attempt " + (loopCounter + 1) + ". New key: " + k0
+              + " new key fitness is: " + newFitness + " old key fitness is: " + fitness);
         LOGGER.info("Decrypted text at loop: " + loopCounter + " : " + decryptedText);
         finalDecryptedText = decryptedText;
         LOGGER.trace("Step 9b in algorithm. Let a = b = 1");
