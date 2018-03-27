@@ -373,7 +373,6 @@ public class CipherUtils {
       }
       LOGGER.trace("Decrypting the cipher text using the new key and evaluate it is fitness");
       final String decryptedText = CipherUtils.applyDecryption(cipherText, k0);
-      finalDecryptedText = decryptedText;
       final Hashtable<String, Double> p0 = generateTextNgrams(4, decryptedText);
       newFitness = calculateFitness(p0, languageNGram);
       LOGGER.trace(
@@ -383,11 +382,11 @@ public class CipherUtils {
       if (newFitness >= fitness) {
         LOGGER.trace("Step 4 in Algorithm :  Let k0 = k.");
         k0 = key;
+        finalDecryptedText = CipherUtils.applyDecryption(cipherText, k0);
       } else {
         LOGGER.info("Key fitness has improved at attempt " + (loopCounter + 1) + ". New key: " + k0
               + " new key fitness is: " + newFitness + " old key fitness is: " + fitness);
         LOGGER.info("Decrypted text at loop: " + loopCounter + " : " + decryptedText);
-        finalDecryptedText = decryptedText;
         LOGGER.trace("Step 9b in algorithm. Let a = b = 1");
         a = 1;
         b = 1;
@@ -395,6 +394,7 @@ public class CipherUtils {
         fitness = newFitness;
         LOGGER.trace("Step 11 in Algorithm. Let k = k0");
         key = k0;
+        finalDecryptedText = decryptedText;
         LOGGER.trace("Step 13 in algorithm. Go to step 6.");
         LOGGER.trace("We don't have to write code because the next executed phrase is step 6.");
       }
